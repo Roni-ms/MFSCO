@@ -33,9 +33,6 @@ map<int, Biomass> LoadBiomassInfo(string theFileName)
 {
 	ifstream theFile;
 	theFile.open(theFileName.c_str());
-
-	ofstream outputest("output_test_1.txt");
-
 	int theID_ = 0;
 	float Harvest_collect_=0;
 	float field_storage_=0;
@@ -80,10 +77,6 @@ map<int, Biomass> LoadBiomassInfo(string theFileName)
 	}
 	theFile.close();
 	map<int, Biomass>::iterator it;
-	for (it = map_biomass.begin(); it != map_biomass.end(); it++)
-	{
-		outputest << it->first << "  " << it->second.Harvest_collect << "   " << it->second.ch_content<< endl;
-	}
 	return map_biomass;
 }
 
@@ -111,7 +104,6 @@ void LoadArcs(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&count
 {
 	
 	int i, j, k;
-	ofstream output("output.txt");
 	sqlite3 *db;
 	char *zErrMsg = 0;
 	int  rc;
@@ -222,53 +214,59 @@ void LoadArcs(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&count
 	{
 		if (sqlite3_column_int(res, 1) != 4)
 		{
-			Arc u;
-			u.loadStart(sqlite3_column_int(res, 0)); //fips
-			u.loadEnd(base_loc); //fips
-			u.loadMid1(sqlite3_column_int(res, 9)); //loading farmgate price
-			u.loadArcType(20 + sqlite3_column_int(res, 1)); //combination of feedstock and arc type , location from field to depot ( e.g 20+1 =depot to refinery biomass type =1 
-			u.loadGroweryPayment((float)sqlite3_column_double(res, 2)); // farmgate-h&c cost
-			u.loadSecArcType(2); // location 
-			u.loadYield((float)sqlite3_column_double(res, 5));
-			u.loadProduction(sqlite3_column_int(res, 4)); //feedstock prd
-			u.loadLatitude((float)sqlite3_column_double(res, 6)); //lat
-			u.loadLongitude((float)sqlite3_column_double(res, 7)); //long
-			u.loadSecArcCost(sqrt((float)sqlite3_column_double(res, 8) / 3.14)); // calcuating draw radius of each county 
+			Arc *u;
+			u = new Arc;
+			u->loadStart(sqlite3_column_int(res, 0)); //fips
+			u->loadEnd(base_loc); //fips
+			u->loadMid1(sqlite3_column_int(res, 9)); //loading farmgate price
+			u->loadArcType(20 + sqlite3_column_int(res, 1)); //combination of feedstock and arc type , location from field to depot ( e.g 20+1 =depot to refinery biomass type =1 
+			u->loadGroweryPayment((float)sqlite3_column_double(res, 2)); // farmgate-h&c cost
+			u->loadSecArcType(2); // location 
+			u->loadYield((float)sqlite3_column_double(res, 5));
+			u->loadProduction(sqlite3_column_int(res, 4)); //feedstock prd
+			u->loadLatitude((float)sqlite3_column_double(res, 6)); //lat
+			u->loadLongitude((float)sqlite3_column_double(res, 7)); //long
+			u->loadSecArcCost(sqrt((float)sqlite3_column_double(res, 8) / 3.14)); // calcuating draw radius of each county 
 
 			dis_ = sqrt(69.1*69.1*(base_lat - (float)sqlite3_column_double(res, 6))*(base_lat - (float)sqlite3_column_double(res, 6)) +
 				53 * 53 * (base_long - (float)sqlite3_column_double(res, 7))*(base_long - (float)sqlite3_column_double(res, 7)));
 			if (sqlite3_column_int(res, 0) == base_loc)
 			{
-				u.loadArcCost(0); //distance from base location
+				u->loadArcCost(0); //distance from base location
 			}
 			else
 			{
-				u.loadArcCost(dis_); //distance from base location
+				u->loadArcCost(dis_); //distance from base location
 			}
 			
-			depotArcs.push_back(u);
-			allArcs.push_back(u);
-			Arc u2;
-			u2.loadLatitude((float)sqlite3_column_double(res, 6)); //lat
-			u2.loadLongitude((float)sqlite3_column_double(res, 7)); //long
-			mapcounty[sqlite3_column_int(res, 0)] = u; //declared to track all county and initial depot 
+			depotArcs.push_back(*u);
+			allArcs.push_back(*u);
+			
+			Arc *u2;
+			u2 = new Arc;
 
+			u2->loadLatitude((float)sqlite3_column_double(res, 6)); //lat
+			u2->loadLongitude((float)sqlite3_column_double(res, 7)); //long
+			mapcounty[sqlite3_column_int(res, 0)] = *u; //declared to track all county and initial depot 
+			delete u;
 			//creating arc type 0 and 1-4;
-			Arc u1;
-			u1.loadStart(sqlite3_column_int(res, 0)); //
-			u1.loadEnd(sqlite3_column_int(res, 0));
-			u1.loadMid1(sqlite3_column_int(res, 9)); //loading farmgate price
-			u1.loadArcType(sqlite3_column_int(res, 1)); //feedstock type=1, location from field to depot 
-			u1.loadGroweryPayment((float)sqlite3_column_double(res, 2));
-			u1.loadSecArcType(0); // field side
-			u1.loadYield((float)sqlite3_column_double(res, 5));
-			u1.loadProduction(sqlite3_column_int(res, 4)); //feedstock prd
-			u1.loadLatitude((float)sqlite3_column_double(res, 6)); //lat
-			u1.loadLongitude((float)sqlite3_column_double(res, 7)); //long
-			u1.loadSecArcCost(sqrt((float)sqlite3_column_double(res, 8) / 3.14)); // calcuating draw radius of each county 
-			u1.loadArcCost(0); //distance from base location
-			allArcs.push_back(u1);
+			Arc *u1;
+			u1 = new Arc;
+			u1->loadStart(sqlite3_column_int(res, 0)); //
+			u1->loadEnd(sqlite3_column_int(res, 0));
+			u1->loadMid1(sqlite3_column_int(res, 9)); //loading farmgate price
+			u1->loadArcType(sqlite3_column_int(res, 1)); //feedstock type=1, location from field to depot 
+			u1->loadGroweryPayment((float)sqlite3_column_double(res, 2));
+			u1->loadSecArcType(0); // field side
+			u1->loadYield((float)sqlite3_column_double(res, 5));
+			u1->loadProduction(sqlite3_column_int(res, 4)); //feedstock prd
+			u1->loadLatitude((float)sqlite3_column_double(res, 6)); //lat
+			u1->loadLongitude((float)sqlite3_column_double(res, 7)); //long
+			u1->loadSecArcCost(sqrt((float)sqlite3_column_double(res, 8) / 3.14)); // calcuating draw radius of each county 
+			u1->loadArcCost(0); //distance from base location
+			allArcs.push_back(*u1);
 			county_production[sqlite3_column_int(res, 0)][sqlite3_column_int(res, 0)][sqlite3_column_int(res, 1)][sqlite3_column_int(res, 9)] = sqlite3_column_int(res, 4);
+			delete u1;
 		}
 	}
 
@@ -293,47 +291,53 @@ void LoadArcs(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&count
 	{
 		for (i = 0; i <depotArcs.size(); i++)
 		{
-			Arc u;
-			u.loadStart(it->first);
-			u.loadEnd(depotArcs[i].getStart());
-			u.loadMid1(depotArcs[i].getMid1()); //loading farmgate price
-			u.loadArcType(depotArcs[i].getArcType() - 10); //feedstock type=1, location from field to depot =1 ( e.g if 23 then 23-10 becomes 13 which is location 1 feedstock type 3) 
-			u.loadGroweryPayment(it->second.getGrowerPayment());
-			u.loadSecArcType(1); // 1 for field
-			u.loadProduction(it->second.getProduction()); //feedstock prd
-			u.loadYield(it->second.getYield());
-			u.loadLatitude(it->second.getLatitude()); //lat
-			u.loadLongitude(it->second.getLongitude()); //long
-			u.loadSecArcCost(depotArcs[i].getSecArcCost()); // calcuating draw radius of each county 
+			Arc *u;
+			u = new Arc;
+			u->loadStart(it->first);
+			u->loadEnd(depotArcs[i].getStart());
+			u->loadMid1(depotArcs[i].getMid1()); //loading farmgate price
+			u->loadArcType(depotArcs[i].getArcType() - 10); //feedstock type=1, location from field to depot =1 ( e.g if 23 then 23-10 becomes 13 which is location 1 feedstock type 3) 
+			u->loadGroweryPayment(it->second.getGrowerPayment());
+			u->loadSecArcType(1); // 1 for field
+			u->loadProduction(it->second.getProduction()); //feedstock prd
+			u->loadYield(it->second.getYield());
+			u->loadLatitude(it->second.getLatitude()); //lat
+			u->loadLongitude(it->second.getLongitude()); //long
+			u->loadSecArcCost(depotArcs[i].getSecArcCost()); // calcuating draw radius of each county 
 			dis_ = sqrt(69.1*69.1*(it->second.getLatitude() - depotArcs[i].getLatitude())*(it->second.getLatitude() - depotArcs[i].getLatitude()) +
 				53 * 53 * (it->second.getLongitude() - depotArcs[i].getLongitude())*(it->second.getLongitude() - depotArcs[i].getLongitude()));
 			if (it->first == depotArcs[i].getStart())
 			{
-				u.loadArcCost(depotArcs[i].getSecArcCost());
+				u->loadArcCost(depotArcs[i].getSecArcCost());
 			}
 			else{
-				u.loadArcCost(dis_); //distance from county centriod to depot centroid location:
+				u->loadArcCost(dis_); //distance from county centriod to depot centroid location:
 			}
-			allArcs.push_back(u);
-			countyArcs.push_back(u); //loading arcs from county to depot only
+			allArcs.push_back(*u);
+			countyArcs.push_back(*u); //loading arcs from county to depot only
+
+			delete u;
 		}
 	}
 	//insert MSW information:
 	int msw_fips = 8031, msw_type = 25, msw_dis = 220 /*220*/; //340 from Phelps county nebraska
 	float msw_gp = 10, msw_lat = 99999, msw_long = 99999;
-	Arc u3;
-	u3.loadStart(msw_fips);  //fips
-	u3.loadEnd(base_loc);
-	u3.loadMid1(9999);
-	u3.loadArcType(msw_type); //feedstock type
-	u3.loadProduction(msw_prd);
-	u3.loadGroweryPayment(msw_gp);
-	u3.loadSecArcType(2); //grower payment
-	u3.loadLatitude(msw_lat); //does not apply
-	u3.loadLongitude(msw_long); // does not apply
-	u3.loadArcCost(msw_dis); //distance from base location
-	allArcs.push_back(u3);
-	depotArcs.push_back(u3);
+	Arc *u3;
+	u3 = new Arc;
+	u3->loadStart(msw_fips);  //fips
+	u3->loadEnd(base_loc);
+	u3->loadMid1(9999);
+	u3->loadArcType(msw_type); //feedstock type
+	u3->loadProduction(msw_prd);
+	u3->loadGroweryPayment(msw_gp);
+	u3->loadSecArcType(2); //grower payment
+	u3->loadLatitude(msw_lat); //does not apply
+	u3->loadLongitude(msw_long); // does not apply
+	u3->loadArcCost(msw_dis); //distance from base location
+	u3->loadYield(0);
+	allArcs.push_back(*u3);
+	depotArcs.push_back(*u3);
+	delete u3;
 	cout << " end of preparing input  total   " <<allArcs.size()<<"   arcs" << endl;
 } 
 

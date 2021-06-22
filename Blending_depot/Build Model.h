@@ -13,25 +13,16 @@
 using namespace std;
 
 typedef IloArray<IloIntVarArray> Arcs;
-
-
 void createMainModel(IloModel model, IloNumVarArray x, IloNumVarArray z, Arcs w, vector<Arc> &allArcs, map<int, Arc> &mapcounty, vector<Arc>&countyArcs, vector<Arc>&depotArcs, 
 	vector<Arc>&Depot_c_cost, vector<Arc>&CountyInfo, map<int, Biomass>&map_biomass, map<int, map<int, map<int, map<int, int>>>>&county_production);
 
-
-//void print_result(IloCplex cplex, IloNumVarArray x, IloNumVarArray y, vector<Arc> &allArcs, vector<county>&CountyInfo, ofstream &output);
-
-
 void CPLEXProgram2(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&countyArcs, vector<Arc>&depotArcs, vector<Arc>&Depot_c_cost, map<int, Biomass>&map_biomass, map<int, map<int, map<int, map<int, int>>>>&county_production)
 {
-	
 	IloEnv env;
 	try {
 
 		int i, j, k;
-
 		ofstream output_2("print_result.txt");
-
 		map<int, Arc>::iterator itw;
 		vector<Arc>CountyInfo;
 
@@ -54,17 +45,12 @@ void CPLEXProgram2(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&
 			w[i] = IloIntVarArray(env, Depot_c_cost.size(), 0, 1); //depot capacity range ;
 		}
 
-
-
-
 		//*************** Writing Economic objective *******************************************
 		//need update cost in the arc:
 		IloExpr obj(env);
 		IloExpr rhs(env);
 
 		IloExpr obj_ash(env);
-
-
 
 		//  minimization  problem
 		for (j = 0; j < allArcs.size(); j++)
@@ -161,7 +147,7 @@ void CPLEXProgram2(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&
 
 		IloCplex cplex(model);
 
-		cplex.exportModel("depot_blending_model.lp");
+		//cplex.exportModel("depot_blending_model.lp");
 
 		//cplex.setParam(IloCplex::EpGap, .01);
 
@@ -171,38 +157,26 @@ void CPLEXProgram2(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&
 			output_2 << "modify model and generate result with penalty cost" << endl;
 			exit;
 		}
-
-		//print_result(cplex, x, y, allArcs, CountyInfo, output_2);
-
-		//output_2 << "cplex.getObjValue()   " << cplex.getObjValue() << endl;
-		for (i = 0; i < allArcs.size(); i++)
-		if (cplex.getValue(x[i])>.01)
-		{
-			output_2 << i << "  " << allArcs[i].getStart() << "   " << allArcs[i].getEnd() << "  " << allArcs[i].getArcType() << "   ";
-			output_2 << allArcs[i].getSecArcType() << "  " << allArcs[i].getGrowerPayment() << "  " << allArcs[i].getProduction() << "   " << allArcs[i].getYield() << "  " << allArcs[i].getLatitude() << "   " << allArcs[i].getLongitude() << "    ";
-			output_2 << allArcs[i].getArcCost() << "    " << allArcs[i].getSecArcCost() << "  " << cplex.getValue(x[i]) << endl;
-		}
-
+		//************** Processing Results*******************************************************
 		float depotcost = 0;
 		float depot_total_size = 0;
-
+		output_2 << "Main results " << endl;
+		output_2 << "Depot location and size " << endl;
+		output_2 << "'Location id'"<<"  "<< "'Capacity'" << endl;
 		for (i = 0; i < CountyInfo.size(); i++)
 		{
 			for (j = 0; j<Depot_c_cost.size(); j++)
 			if (cplex.getValue(w[i][j])>.01)
 			{
-				output_2 << CountyInfo[i].getArcID() << "  " << Depot_c_cost[j].getProduction() << "   " << /*cplex.getValue(w[i][j]) <<*/ endl;
 				depotcost = depotcost + Depot_c_cost[j].getProduction()*Depot_c_cost[j].getArcCost();
 				depot_total_size = depot_total_size + Depot_c_cost[j].getProduction();
+				output_2 << CountyInfo[i].getArcID() << "  " << Depot_c_cost[j].getProduction() << "   " << /*cplex.getValue(w[i][j]) <<*/ endl;
 			}
 		}
 
-
 		double total_cost = 0, total_biomass = 0, delivered_feedstock_cost = 0;
 
-	
 
-		output_2 << "delivered cost" << total_cost / total_biomass << "using objective function " << cplex.getObjValue() / total_biomass << "  " << "objective value " << cplex.getObjValue() << endl;
 
 		f1_other = map_biomass[1].Harvest_collect + map_biomass[1].field_storage + map_biomass[1].prep_depot + map_biomass[1].Handling_queing_depot + map_biomass[1].depot_storage + map_biomass[1].biorefinery_storage
 			+ map_biomass[1].handling_queuing_refinery + map_biomass[1].blending;
@@ -306,30 +280,31 @@ void CPLEXProgram2(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&
 			}
 
 		}
-		output_2 << "main resutls " << endl;
+		
 
+		output_2 << "Summary of sourced biomass for blending with cost and other information  " << endl;
+		output_2 << " 'Biomass type'" << " " << "'Purchased biomass'" << " " << "'Average grower payment'" << "  " << "'Transp-1. cost'" << "'Average Transp.-1 distance'" << "  ";
+		output_2 << "'Transp.-1 biomass'" << " " << "'Transp-2. cost'" << "'Average Transp.-2 distance'" << "'Transp.-2 biomass'" << " " << "'Avg. Depot Construciton cost'" << "  ";
+		output_2<<"'Other cost'"<<"  "<<"Carb. %'"<<"  "<<"'Moisture %'"<<"  "<<"'Dry matter loss %'"<<endl;
 
-
-
-
-		output_2 << "blended table " << endl;
-
-		output_2 << fed1 << "  " << g1 / fed1 << "   " << t1 / fed1t << "  " << d1 / fed1t << "  " << fed1t << "   " << t1_ / fed1_ << "  " << d1_ / fed1_ << "   " << fed1_ << "   " << depotcost / depot_total_size << "  ";
+		output_2 <<"3P-CS"<<" "<< fed1 << "  " << g1 / fed1 << "   " << t1 / fed1t << "  " << d1 / fed1t << "  " << fed1t << "   " << t1_ / fed1_ << "  " << d1_ / fed1_ << "   " << fed1_ << "   " << depotcost / depot_total_size << "  ";
 		output_2 << f1_other << "  " << c1 << "  " << a1 << "  " << map_biomass[1].moisture_content << "    " << map_biomass[1].dml << endl;
 
-		output_2 << fed2 << "  " << g2 / fed2 << "   " << t2 / fed2t << "  " << d2 / fed2t << "  " << fed2t << "   " << t2_ / fed2_ << "  " << d2_ / fed2_ << "   " << fed2_ << "   " << depotcost / depot_total_size << "  ";
+		output_2 << "2P-CS" << "   "<<fed2 << "  " << g2 / fed2 << "   " << t2 / fed2t << "  " << d2 / fed2t << "  " << fed2t << "   " << t2_ / fed2_ << "  " << d2_ / fed2_ << "   " << fed2_ << "   " << depotcost / depot_total_size << "  ";
 		output_2 << f2_other << "  " << c2 << "  " << a2 << "  " << map_biomass[2].moisture_content << "    " << map_biomass[2].dml << endl;
-		output_2 << fed3 << "  " << g3 / fed3 << "   " << t3 / fed3t << "  " << d3 / fed3t << "  " << fed3t << "   " << t3_ / fed3_ << "  " << d3_ / fed3_ << "   " << fed3_ << "   " << depotcost / depot_total_size << "  ";
+		output_2 << "SG" << "   " << fed3 << "  " << g3 / fed3 << "   " << t3 / fed3t << "  " << d3 / fed3t << "  " << fed3t << "   " << t3_ / fed3_ << "  " << d3_ / fed3_ << "   " << fed3_ << "   " << depotcost / depot_total_size << "  ";
 		output_2 << f3_other << "  " << c3 << "  " << a3 << "  " << map_biomass[3].moisture_content << "    " << map_biomass[3].dml << endl;
 		
-		output_2 << fed5_ / (1 - map_biomass[5].dml) << "  " << 10 << "   " << 0 << "  " << 0 << "  " << 0 << "  " << t5_ / fed5_ << "  " << d5_ / fed5_ << "   " << fed5_ << "   " << 0 << "  ";
+		output_2 << "GC" << "   " << fed5_ / (1 - map_biomass[5].dml) << "  " << 10 << "   " << 0 << "  " << 0 << "  " << 0 << "  " << t5_ / fed5_ << "  " << d5_ / fed5_ << "   " << fed5_ << "   " << 0 << "  ";
 		output_2 << f5_other << "  " << c5 << "  " << a5 << "  " << map_biomass[5].moisture_content << "    " << map_biomass[5].dml << endl;
 		
 
 		//printing county supply and used supply:
 
 		//create table 2: 
-		output_2 << "table 2 for field location " << endl;
+		output_2 << "Summary of sourced biomass from different county " << endl;
+
+		output_2 << "'County FIPS'" <<" "<<"'Farmgate Price'"<<"'Available biomass'"<<"  "<<"'Purchased Biomass'"<<"'Yield'"<< endl;
 		 for (i = 0; i < allArcs.size(); i++)
 		 if (cplex.getValue(x[i])>.01)
 		 {
@@ -353,9 +328,7 @@ void CPLEXProgram2(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&
 
 		//end of creating table 2
 	
-
 	}
-
 	catch(IloException& e) {
 	cerr  << " ERROR: " << e << endl;   
 	}
@@ -371,8 +344,6 @@ void createMainModel(IloModel model, IloNumVarArray x, IloNumVarArray z, Arcs w,
 {
 	int i,j,k=0;
 	IloEnv env =model.getEnv();
-	ofstream output_3("debug_result.txt");
-	
 	char *VarName;
 	VarName=new char[200];
 	
@@ -457,7 +428,7 @@ void createMainModel(IloModel model, IloNumVarArray x, IloNumVarArray z, Arcs w,
 	totalfeedstock.end();
 
 
-	cout << " end of loading  constraitns 2, 10 and 11 " << endl;
+	
 	//constraint 2 
 	//this loop make has multiple set of constraints: 1)  select exactly one farmgate price 2)biomass coming in field storage from harvesting site = sum of going out to different depot from filed storage 
 
@@ -556,8 +527,7 @@ void createMainModel(IloModel model, IloNumVarArray x, IloNumVarArray z, Arcs w,
 
 		model.add(helper03 <= 1);//elect exactly one farmgate price for switchgrass 
 
-		//model.add(helper04 <= 1); //miscanthus
-		//model.add(helper05 <= 1); //grass clipping 
+		 
 		model.add(helper01_-helper11==0); // biomass coming in field storage from harvesting site = sum of going out to different depot from filed storage for 3P CS
 		model.add(helper02_ - helper12 == 0); //biomass coming in field storage = sum of going out to different depot for 2P CS
 		model.add(helper03_ - helper13 == 0);//biomass coming in field storage from harvesting site = sum of going out to different depot from filed storage for SG
@@ -586,8 +556,6 @@ void createMainModel(IloModel model, IloNumVarArray x, IloNumVarArray z, Arcs w,
 		helper15.end();
 	}
 
-	cout << " end of loading costraint 3 and 4" << endl;
-	
 	///adding dml at conservation: 
 	bool expfound1, expfound2;
 	
@@ -711,7 +679,6 @@ void createMainModel(IloModel model, IloNumVarArray x, IloNumVarArray z, Arcs w,
 
 	}
 
-	cout << " end of loading constratins 5,6,7,8,9 " << endl;
 	map<int, map<int, map<int, map<int, int>>>>map_arcs;
 
 	map<int, int>::iterator it1; // Please use it1 this way : it1 = map_arcs[t][l][it3->first][it2->first].begin()
@@ -727,24 +694,6 @@ void createMainModel(IloModel model, IloNumVarArray x, IloNumVarArray z, Arcs w,
 		map_arcs[allArcs[i].getStart()][allArcs[i].getEnd()][allArcs[i].getArcType()][allArcs[i].getMid1()] = i; //maparcs[county][county][arc type][farm gate price ]allArcs[i].getMid1()=farmgate price 
 	}
 	
-
-	///summing of all farmgate price must be less then 1
-
-
-	//for (it4 = map_arcs.begin(); it4 != map_arcs.end(); it4++)
-	//for (it3 = map_arcs[it4->first].begin(); it3 != map_arcs[it4->first].end(); it3++)
-	//for (it2 = map_arcs[it4->first][it3->first].begin(); it2 != map_arcs[it4->first][it3->first].end(); it2++)
-	//{
-	//	IloExpr helper_fm(env); // expression to incoming
-	//	for (it1 = map_arcs[it4->first][it3->first][it2->first].begin(); it1 != map_arcs[it4->first][it3->first][it2->first].end(); it1++)
-	//	{
-	//		helper_fm += z[map_arcs[it4->first][it3->first][it2->first][it1->first]];
-	//	}
-	//	model.add(helper_fm <= 1);
-	//	helper_fm.end();
-	//}
-	cout << " end of loading constratins 10 (summing single farmgate price " << endl;
-
 	map<int, int>::iterator it1_; // Please use it1 this way : it1 = map_arcs[t][l][it3->first][it2->first].begin()
 	map<int, map<int, int>>::iterator it2_;
 	map<int, map<int, map<int, int>>>::iterator it3_;
@@ -770,11 +719,7 @@ void createMainModel(IloModel model, IloNumVarArray x, IloNumVarArray z, Arcs w,
 			helperx.end();
 		}
 	}
-		
-	
-	
-	
-	
+
 }
 
 	
