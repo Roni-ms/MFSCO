@@ -19,16 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\..\..\..\Documents\C++ project\Multi_period_depot_opt\Multi_period_depot_opt\Optimization Model_multi_period.h" />
-    <ClInclude Include="Arc.h" />
-    <ClInclude Include="Biomass_info.h" />
-    <ClInclude Include="county.h" />
-    <ClInclude Include="Process data .h" />
-    <ClInclude Include="Input_Data.h" />
-    <ClInclude Include="Build Model.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0D61FF56-49AF-4FC8-AC88-49A25B3A4F31}</ProjectGuid>
