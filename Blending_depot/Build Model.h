@@ -46,7 +46,6 @@ void CPLEXProgram2(vector<Arc> &allArcs, map<int, Arc> & mapcounty, vector<Arc>&
 		}
 
 		//*************** Writing Economic objective *******************************************
-		//need update cost in the arc:
 		IloExpr obj(env);
 		IloExpr rhs(env);
 

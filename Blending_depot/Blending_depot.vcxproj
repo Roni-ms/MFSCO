@@ -22,6 +22,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Documents\C++ project\Multi_period_depot_opt\Multi_period_depot_opt\Optimization Model_multi_period.h" />
     <ClInclude Include="Arc.h" />
     <ClInclude Include="Biomass_info.h" />
     <ClInclude Include="county.h" />
