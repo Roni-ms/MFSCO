@@ -1,0 +1,7 @@
+
+
+
+******************************************2009******************************************
+modify model and generate result with penalty cost
+Depot location 
+Average depot cost -nan(ind)
