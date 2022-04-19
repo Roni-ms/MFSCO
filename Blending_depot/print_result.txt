@@ -1,9 +1,0 @@
-
-
-
-******************************************2009******************************************
-Depot location 
-31035  475000   
-31137  300000   
-Average depot cost 2.51613
-delivered cost using objective function objective value 6.07154e+07
